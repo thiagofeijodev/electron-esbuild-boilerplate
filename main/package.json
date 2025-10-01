@@ -1,0 +1,34 @@
+{
+  "name": "electron-esbuild-boilerplate",
+  "description": "main",
+  "version": "1.0.0",
+  "main": "dist/main.cjs",
+  "author": "Thiago Feijó <thiago@feijo.dev>",
+  "homepage": "https://github.com/thiagofeijodev/electron-esbuild-boilerplate",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "start": "bun run build && wait-on tcp:5500 && bun electron .",
+    "start:no-wait": "bun run build && bun electron .",
+    "watch": "bun run esbuild.ts --watch",
+    "build": "bun run esbuild.ts",
+    "electron:build": "bun electron-builder build --publish=never",
+    "install-app-deps": "electron-builder install-app-deps",
+    "compile-img": "bun run _config/scripts/img-resizer.ts",
+    "postinstall": "bun run install-app-deps && bun run compile-img && bun run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.1",
+    "chokidar": "^4.0.3",
+    "debounce-fn": "^6.0.0",
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12",
+    "electron-debug": "^4.1.0",
+    "electron-util": "^1.0.0",
+    "esbuild": "^0.25.10",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.4",
+    "typescript": "^5.9.2",
+    "wait-on": "^9.0.1"
+  }
+}

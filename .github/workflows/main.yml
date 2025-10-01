@@ -1,0 +1,208 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [published]
+
+# Grant the workflow token permission to create releases
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    name: ESLint Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+            main/node_modules
+            renderer/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+            
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Run ESLint
+        run: bun run lint
+        
+      - name: ESLint Results
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ ESLint passed successfully!"
+          else
+            echo "❌ ESLint found issues. Please fix them before merging."
+            echo "💡 Run 'bun run lint:fix' to auto-fix some issues."
+            exit 1
+          fi
+
+  build:
+    name: Build Check
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest] #os: [ubuntu-latest, windows-latest, macos-latest] TODO: Add windows-latest
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+            main/node_modules
+            renderer/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+            
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Build renderer
+        run: bun run build:renderer
+        
+      - name: Build main process
+        run: bun run build:main
+        
+      - name: Build Results
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ Build completed successfully on ${{ matrix.os }}!"
+          else
+            echo "❌ Build failed on ${{ matrix.os }}."
+            exit 1
+          fi
+
+  test-electron-build:
+    name: Test Electron Build
+    runs-on: ${{ matrix.os }}
+    needs: build
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest] #os: [ubuntu-latest, windows-latest, macos-latest] TODO: Add windows-latest
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+            main/node_modules
+            renderer/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+            
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Build renderer
+        run: bun run build:renderer
+        
+      - name: Build main process
+        run: bun run build:main
+        
+      - name: Test Electron build (no packaging)
+        run: |
+          cd main
+          bun run build
+          echo "✅ Electron build test passed on ${{ matrix.os }}!"
+          
+      - name: Upload build artifacts (macOS only)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-build-macos
+          path: main/dist/
+          retention-days: 7
+
+  build-release:
+    name: Build Release
+    runs-on: ${{ matrix.os }}
+    needs: [lint, build]
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest] #os: [ubuntu-latest, windows-latest, macos-latest] TODO: Add windows-latest
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+            main/node_modules
+            renderer/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+            
+      - name: Install dependencies
+        run: bun install
+        
+      - name: Build renderer
+        run: bun run build:renderer
+        
+      - name: Build main process
+        run: bun run build:main
+        
+      - name: Build Electron app
+        run: |
+          cd main
+          bun run electron:build
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-build-${{ matrix.os }}
+          path: |
+            release/build/
+          retention-days: 30

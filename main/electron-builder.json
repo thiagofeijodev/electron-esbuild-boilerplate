@@ -1,0 +1,91 @@
+{
+  "productName": "Electron Boilerplate",
+  "appId": "dev.feijo.electron-boilerplate",
+  "asar": true,
+  "compression": "store",
+  "directories": {
+    "buildResources": "_config/assets",
+    "output": "../release/build"
+  },
+  "files": [
+    "main.cjs",
+    "dist/main.cjs",
+    "preload.cjs",
+    "dist/preload.cjs",
+    "package.json",
+    "!**/*.map",
+    {
+      "from": "dist",
+      "filter": ["**/*", "!**/*.map"]
+    },
+    {
+      "from": "../renderer/dist",
+      "to": "dist/renderer",
+      "filter": ["**/*", "!**/*.map"]
+    },
+    {
+      "from": "./_config/assets",
+      "to": "_config/assets",
+      "filter": ["**/*", "!**/*.map"]
+    }
+  ],
+  "win": {
+    "icon": "dist/_config/assets/icons/renderer",
+    "target": [
+      "nsis",
+      "zip"
+    ]
+  },
+  "portable": {
+    "splashImage": "dist/_config/assets/icons/renderer/electron.bmp"
+  },
+  "mac": {
+    "icon": "dist/_config/assets/icons/renderer",
+    "category": "public.app-category.graphics-design",
+    "type": "distribution",
+    "hardenedRuntime": true,
+    "entitlements": "_config/assets/entitlements.mac.plist",
+    "entitlementsInherit": "_config/assets/entitlements.mac.plist",
+    "gatekeeperAssess": false,
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["arm64", "x64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["arm64", "x64"]
+      }
+    ]
+  },
+  "dmg": {
+    "contents": [
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      },
+      {
+        "x": 130,
+        "y": 220,
+        "type": "file"
+      }
+    ]
+  },
+  "linux": {
+    "icon": "dist/_config/assets/icons/renderer",
+    "target": [
+      "AppImage",
+      "deb"
+    ],
+    "category": "Graphics"
+  },
+  "extraResources": [
+    {
+      "from": "./_config/assets",
+      "to": "assets",
+      "filter": ["**/*", "!**/*.map"]
+    }
+  ]
+}
